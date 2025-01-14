@@ -1,17 +1,21 @@
 <?php
-// Database connection
+// Include database connection
 include 'db.php';
-// Get the product ID from the URL
-$product_id = $_GET['id'];
 
-// SQL to delete the product from the database
-$sql = "DELETE FROM products WHERE id = $product_id";
+// Get the product ID from the URL securely
+$product_id = intval($_GET['id']);
 
-if ($conn->query($sql) === TRUE) {
+// Delete product using a prepared statement
+$sql = "DELETE FROM products WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $product_id);
+
+if ($stmt->execute()) {
     echo "Product deleted successfully.";
-    header("Location: index.php"); // Redirect to the product list page
+    header("Location: index.php");
+    exit();
 } else {
-    echo "Error: " . $sql . "<br>" . $conn->error;
+    echo "Error deleting product: " . $conn->error;
 }
 
 $conn->close();

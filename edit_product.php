@@ -1,13 +1,16 @@
 <?php
+// Include database connection
+include 'db.php';
 
-// Database connection
-include 'db.php';   
 // Get the product ID from the URL
-$product_id = $_GET['id'];
+$product_id = intval($_GET['id']);
 
-// Fetch the product details from the database
-$sql = "SELECT * FROM products WHERE id = $product_id";
-$result = $conn->query($sql);
+// Fetch product details securely
+$sql = "SELECT * FROM products WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
@@ -17,21 +20,24 @@ if ($result->num_rows > 0) {
 }
 
 // Handle form submission for updating product details
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = $_POST['name'];
-    $description = $_POST['description'];
-    $image = $_POST['image'];
-    $weight = $_POST['weight'];
-    $price = $_POST['price'];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $name = trim($_POST['name']);
+    $description = trim($_POST['description']);
+    $image = trim($_POST['image']);
+    $weight = (float) $_POST['weight'];
+    $price = (float) $_POST['price'];
 
-    // SQL to update the product in the database
-    $sql = "UPDATE products SET name='$name', description='$description', image='$image', weight='$weight', price='$price' WHERE id=$product_id";
+    // Update product details securely
+    $update_sql = "UPDATE products SET name = ?, description = ?, image = ?, weight = ?, price = ? WHERE id = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param("sssddi", $name, $description, $image, $weight, $price, $product_id);
 
-    if ($conn->query($sql) === TRUE) {
+    if ($update_stmt->execute()) {
         echo "Product updated successfully.";
-        header("Location: index.php"); // Redirect to the product list page
+        header("Location: index.php");
+        exit();
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        echo "Error updating product: " . $conn->error;
     }
 }
 
@@ -49,21 +55,23 @@ $conn->close();
     <h2>Edit Product</h2>
     <form method="POST">
         <label for="name">Product Name:</label><br>
-        <input type="text" id="name" name="name" value="<?php echo $row['name']; ?>" required><br><br>
+        <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($row['name']); ?>" required><br><br>
         
         <label for="description">Description:</label><br>
-        <textarea id="description" name="description" required><?php echo $row['description']; ?></textarea><br><br>
+        <textarea id="description" name="description" required><?php echo htmlspecialchars($row['description']); ?></textarea><br><br>
         
         <label for="image">Image ID or Filename:</label><br>
-        <input type="text" id="image" name="image" value="<?php echo $row['image']; ?>" required><br><br>
+        <input type="text" id="image" name="image" value="<?php echo htmlspecialchars($row['image']); ?>" required><br><br>
         
-        <label for="weight">Weight:</label><br>
-        <input type="number" id="weight" name="weight" value="<?php echo $row['weight']; ?>" required><br><br>
+        <label for="weight">Weight (kg):</label><br>
+        <input type="number" id="weight" name="weight" step="0.01" value="<?php echo $row['weight']; ?>" required><br><br>
         
-        <label for="price">Price:</label><br>
-        <input type="text" id="price" name="price" value="<?php echo $row['price']; ?>" required><br><br>
+        <label for="price">Price (BDT):</label><br>
+        <input type="number" id="price" name="price" step="0.01" value="<?php echo $row['price']; ?>" required><br><br>
 
         <button type="submit">Update Product</button>
     </form>
+
+    <p><a href="index.php">Back to Product List</a></p>
 </body>
 </html>
