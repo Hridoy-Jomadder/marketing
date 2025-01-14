@@ -36,6 +36,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         echo "No user found with that email.";
     }
 }
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
+    $role = trim($_POST['role']); // 'Admin', 'Seller', 'Customer'
+
+    // Hash the password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    $sql = "INSERT INTO users (email, password, role) VALUES (?, ?, ?)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("sss", $email, $hashed_password, $role);
+
+    if ($stmt->execute()) {
+        echo "User registered successfully.";
+    } else {
+        echo "Error: " . $stmt->error;
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
