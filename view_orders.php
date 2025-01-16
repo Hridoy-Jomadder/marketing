@@ -2,87 +2,50 @@
 session_start();
 include 'db.php';
 
-// Check if the user is an Admin or Seller
-if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['Admin', 'Seller'])) {
+// Redirect to login if the user is not signed in
+if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Fetch orders from the database
-$sql = "SELECT orders.id, orders.customer_name, orders.product_name, orders.quantity, orders.total_price, orders.order_status, orders.order_date 
-        FROM orders ORDER BY orders.order_date DESC";
-$result = $conn->query($sql);
+$user_id = $_SESSION['user_id'];
+
+// Ensure the database is selected
+$conn->select_db('family_data');
+
+// Query to fetch orders
+$sql = "SELECT o.id, o.user_id, o.order_date, o.status, o.total_price, o.shipping_address, o.payment_method 
+        FROM orders o 
+        WHERE o.user_id = ?";
+
+$stmt = $conn->prepare($sql);
+
+if ($stmt) {
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        echo "<h1>Your Orders</h1>";
+        while ($row = $result->fetch_assoc()) {
+            echo "Order ID: " . htmlspecialchars($row['id']) . "<br>";
+            echo "Order Date: " . htmlspecialchars($row['order_date']) . "<br>";
+            echo "Status: " . htmlspecialchars($row['status']) . "<br>";
+            echo "Total Price: $" . htmlspecialchars($row['total_price']) . "<br>";
+            echo "Shipping Address: " . htmlspecialchars($row['shipping_address']) . "<br>";
+            echo "Payment Method: " . htmlspecialchars($row['payment_method']) . "<br><hr>";
+        }
+    } else {
+        echo "No orders found.";
+    }
+
+    $stmt->close();
+} else {
+    echo "SQL Error: " . $conn->error;
+}
+
+$conn->close();
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Orders</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-        a {
-            text-decoration: none;
-            color: blue;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <h1>View Orders</h1>
-    <table>
-        <tr>
-            <th>Order ID</th>
-            <th>Customer Name</th>
-            <th>Product Name</th>
-            <th>Quantity</th>
-            <th>Total Price (BDT)</th>
-            <th>Status</th>
-            <th>Order Date</th>
-            <th>Actions</th>
-        </tr>
-
-        <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                echo "<tr>
-                        <td>{$row['id']}</td>
-                        <td>" . htmlspecialchars($row['customer_name']) . "</td>
-                        <td>" . htmlspecialchars($row['product_name']) . "</td>
-                        <td>{$row['quantity']}</td>
-                        <td>{$row['total_price']}</td>
-                        <td>{$row['order_status']}</td>
-                        <td>{$row['order_date']}</td>
-                        <td>
-                            <a href='update_order_status.php?id={$row['id']}'>Update Status</a>
-                        </td>
-                      </tr>";
-            }
-        } else {
-            echo "<tr><td colspan='8'>No orders found.</td></tr>";
-        }
-
-        $conn->close();
-        ?>
-
-    </table>
-    <br>
-    <a href="admin_dashboard.php">Back to Dashboard</a>
-</body>
-</html>
+<a href="seller_dashboard.php">Back to Dashboard</a><br>
+<a href="logout.php">Logout</a>

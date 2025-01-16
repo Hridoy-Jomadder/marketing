@@ -2,10 +2,11 @@
 session_start();
 include 'db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'login') {
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
 
+    // Check if the user exists
     $sql = "SELECT * FROM users WHERE email = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $email);
@@ -14,9 +15,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
-        
+
         // Verify password
         if (password_verify($password, $user['password'])) {
+            // Regenerate session ID to prevent session fixation
+            session_regenerate_id(true);
+
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['role'] = $user['role'];
 
@@ -30,31 +34,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
             exit();
         } else {
-            echo "Invalid credentials.";
+            $_SESSION['error_message'] = "Invalid credentials.";
+            header("Location: login.php");
+            exit();
         }
     } else {
-        echo "No user found with that email.";
+        $_SESSION['error_message'] = "No user found with that email.";
+        header("Location: login.php");
+        exit();
     }
 }
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-    $role = trim($_POST['role']); // 'Admin', 'Seller', 'Customer'
-
-    // Hash the password
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-    $sql = "INSERT INTO users (email, password, role) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sss", $email, $hashed_password, $role);
-
-    if ($stmt->execute()) {
-        echo "User registered successfully.";
-    } else {
-        echo "Error: " . $stmt->error;
-    }
-}
-
 ?>
 
 <!DOCTYPE html>
@@ -66,6 +55,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <h2>Login</h2>
+
+    <!-- Display error messages if any -->
+    <?php
+    if (isset($_SESSION['error_message'])) {
+        echo "<p style='color: red;'>" . $_SESSION['error_message'] . "</p>";
+        unset($_SESSION['error_message']);
+    }
+    ?>
+
     <form method="POST">
         <label>Email:</label><br>
         <input type="email" name="email" required><br><br>
@@ -73,8 +71,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <label>Password:</label><br>
         <input type="password" name="password" required><br><br>
 
+        <input type="hidden" name="action" value="login">
         <button type="submit">Login</button>
     </form>
+    <br>
+    <a href="signup.php">Don't have an account? Sign up here</a>
 </body>
 </html>
-
