@@ -1,20 +1,22 @@
 <?php
 // products.php
-// Include session and database connection
+// Start session and include database connection
 session_start();
 include_once 'config.php';
 
-// Check if user is logged in
+// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Fetch products from database
+// Fetch all products from the database
 $query = "SELECT * FROM products";
-$result = mysqli_query($conn, $query);
+$result = $conn->query($query);
+
+if (!$result) {
+    die("SQL Error: " . $conn->error); // Debugging SQL errors
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,7 +53,7 @@ $result = mysqli_query($conn, $query);
 
     <!-- Products Section -->
     <div class="container mt-5">
-        <h2 class="mb-4">Products</h2>
+        <h2 class="mb-4">All Products</h2>
         <div class="table-responsive">
             <table class="table table-bordered table-striped">
                 <thead>
@@ -60,25 +62,29 @@ $result = mysqli_query($conn, $query);
                         <th>Name</th>
                         <th>Description</th>
                         <th>Price</th>
+                        <th>Division</th>
+                        <th>Address</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (mysqli_num_rows($result) > 0): ?>
-                        <?php while ($row = mysqli_fetch_assoc($result)): ?>
+                    <?php if ($result && $result->num_rows > 0): ?>
+                        <?php while ($row = $result->fetch_assoc()): ?>
                             <tr>
                                 <td><?php echo $row['id']; ?></td>
                                 <td><?php echo htmlspecialchars($row['name']); ?></td>
                                 <td><?php echo htmlspecialchars($row['description']); ?></td>
                                 <td><?php echo $row['price']; ?></td>
+                                <td><?php echo htmlspecialchars($row['division']); ?></td>
+                                <td><?php echo htmlspecialchars($row['address']); ?></td>
                                 <td>
-                                <a href="order.php?id=<?php echo $row['id']; ?>" class="btn btn-warning btn-sm">Order</a>
+                                    <a href="order.php?id=<?php echo $row['id']; ?>" class="btn btn-warning btn-sm">Order</a>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="5" class="text-center">No products found.</td>
+                            <td colspan="7" class="text-center">No products found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

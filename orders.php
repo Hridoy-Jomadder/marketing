@@ -50,6 +50,31 @@ if ($result->num_rows === 0) {
     <title>View Orders</title>
 </head>
 <body>
+<header>
+        <h1>Welcome to the Agri E-Marketplace</h1>
+        <p>Your personal profile</p>
+    </header>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.php">Agri E-Marketplace</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="add_product.php">Add Product</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="orders.php">Orders</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bill.php">Bill</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <h2>Orders for Bill ID: <?php echo htmlspecialchars($bill_id); ?></h2>
     <table border="1">
         <thead>

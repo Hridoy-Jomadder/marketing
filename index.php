@@ -1,4 +1,17 @@
 <?php
+// Start session to track logged-in user
+session_start();
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    // Redirect to login page if user is not logged in
+    header('Location: login.php');
+    exit();
+}
+
+// Get the user_id from the session
+$user_id = $_SESSION['user_id'];
+
 // Include database connection file
 include 'db.php';
 
@@ -7,32 +20,30 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-// Query to fetch products
-$query = "SELECT * FROM products";
-$result = mysqli_query($conn, $query);
-
-// Check for errors in the query
-if (!$result) {
-    die("Query failed: " . mysqli_error($conn));
-}
-
-// Pagination logic (if needed)
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+// Pagination variables
 $limit = 10; // Number of records per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
-// Get total number of products
-$totalQuery = "SELECT COUNT(*) as total FROM products";
-$totalResult = mysqli_query($conn, $totalQuery);
-$totalRow = mysqli_fetch_assoc($totalResult);
+// Query to fetch products for the logged-in user with pagination
+$query = "SELECT * FROM products WHERE user_id = ? LIMIT ? OFFSET ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("iii", $user_id, $limit, $offset); // Bind the user_id, limit, and offset
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Get total number of products for the logged-in user
+$totalQuery = "SELECT COUNT(*) as total FROM products WHERE user_id = ?";
+$totalStmt = $conn->prepare($totalQuery);
+$totalStmt->bind_param("i", $user_id); // Bind the user_id
+$totalStmt->execute();
+$totalResult = $totalStmt->get_result();
+$totalRow = $totalResult->fetch_assoc();
 $totalProducts = $totalRow['total'];
 
-// Total pages
-$totalPages = ceil($totalProducts / $limit);
+// Avoid division by zero
+$totalPages = ($totalProducts > 0) ? ceil($totalProducts / $limit) : 1;
 
-// Fetch paginated results
-$query .= " LIMIT $limit OFFSET $offset";
-$result = mysqli_query($conn, $query);
 ?>
 
 <!DOCTYPE html>
@@ -96,7 +107,7 @@ $result = mysqli_query($conn, $query);
                     <li class="nav-item"><a class="nav-link active" href="index.php">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
                     <li class="nav-item"><a class="nav-link" href="add_product.php">Add Product</a></li>
-                    <li class="nav-item"><a class="nav-link" href="view_orders.php">Orders</a></li>
+                    <li class="nav-item"><a class="nav-link" href="orders.php">Orders</a></li>
                     <li class="nav-item"><a class="nav-link" href="bill.php">Bill</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
                     <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout</a></li>
@@ -106,7 +117,7 @@ $result = mysqli_query($conn, $query);
     </nav>
 
     <div class="container mt-4">
-        <h2 class="text-center mb-4">Available Products</h2>
+        <h2 class="text-center mb-4">My Products</h2>
 
         <?php if ($result && $result->num_rows > 0): ?>
             <table class="table table-striped table-hover">
@@ -142,7 +153,8 @@ $result = mysqli_query($conn, $query);
                     <?php endwhile; ?>
                 </tbody>
             </table>
-
+            <?php echo "Total Products: " . $totalProducts;  // Debug output
+            ?>
             <nav>
                 <ul class="pagination">
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>

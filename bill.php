@@ -76,10 +76,10 @@ $result = $stmt->get_result();
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
                     <li class="nav-item"><a class="nav-link" href="add_product.php">Add Product</a></li>
-                    <li class="nav-item"><a class="nav-link" href="view_orders.php">Orders</a></li>
+                    <li class="nav-item"><a class="nav-link" href="orders.php">Orders</a></li>
                     <li class="nav-item"><a class="nav-link active" href="bill.php">Bill</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
                     <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout</a></li>

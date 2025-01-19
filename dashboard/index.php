@@ -52,7 +52,7 @@
                 <div class="navbar-nav ms-auto py-0">
                     <a href="index.php" class="nav-item nav-link active">Dashboard</a>
                     <a href="about.php" class="nav-item nav-link">About</a>
-                    <a href="services.php" class="nav-item nav-link">Services</a>
+                    <a href="service.php" class="nav-item nav-link">Services</a>
                     <a href="products.php" class="nav-item nav-link">Products</a>
                     <a href="contact.php" class="nav-item nav-link">Contact</a>
                 </div>
