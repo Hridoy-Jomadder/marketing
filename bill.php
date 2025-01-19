@@ -23,99 +23,116 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bills</title>
-    <meta content="" name="keywords">
-    <meta content="" name="description">
+    <title>Bill Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Header Style */
+        header {
+            background: linear-gradient(90deg, #007bff, #6c63ff);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
 
-    <!-- Google Web Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Rubik:wght@400;500&display=swap" rel="stylesheet"> 
+        .navbar {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
 
-    <!-- Icon Font Stylesheet -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+        .nav-link.active {
+            font-weight: bold;
+            color: #f0ad4e !important;
+        }
 
-    <!-- Libraries Stylesheet -->
-    <link href="lib/animate/animate.min.css" rel="stylesheet">
-    <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
-    <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
+        .table {
+            margin-top: 20px;
+            font-size: 1rem;
+        }
 
-    <!-- Customized Bootstrap Stylesheet -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+        .pagination {
+            justify-content: center;
+            margin-top: 20px;
+        }
 
-    <!-- Template Stylesheet -->
-    <link href="css/style.css" rel="stylesheet">
+        footer {
+            margin-top: 50px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-<div class="header">
-    <h1>Welcome to the Agri E-Marketplace</h1>
-</div>
+    <header>
+        <h1>Your Bills</h1>
+        <p>View and manage your payment details with ease.</p>
+    </header>
 
-<div class="navbar">
-    <a href="index.php">Home</a>
-    <a href="profile.php">Profile</a>    
-    <?php if (!empty($_SESSION['role']) && ($_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Seller')): ?>
-        <a href="add_product.php">Add New Product</a>
-    <?php endif; ?>
-    <a href="view_orders.php">View Products</a>
-    <a href="new_order.php">New Order</a>
-    <a href="bill.php">Bill</a>
-    <a href="about.php">About</a>
-    <a href="contact.php">Contact</a>
-    <a href="logout.php" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
-</div>
-
-<div class="content">
-    <h2>Your Bills</h2>
-    <?php if ($result->num_rows > 0): ?>
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>Bill ID</th>
-                        <th>Date</th>
-                        <th>Total Amount (BDT)</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = $result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($row['id']); ?></td>
-                            <td><?php echo htmlspecialchars($row['bill_date']); ?></td>
-                            <td><?php echo htmlspecialchars($row['total_amount']); ?></td>
-                            <td><?php echo htmlspecialchars($row['status']); ?></td>
-                            <td>
-                                <a href="view_bill.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary btn-sm">View</a>
-                                <?php if ($row['status'] === 'Unpaid'): ?>
-                                    <a href="pay_bill.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-success btn-sm">Pay</a>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.php">Agri E-Marketplace</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="add_product.php">Add Product</a></li>
+                    <li class="nav-item"><a class="nav-link" href="view_orders.php">Orders</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="bill.php">Bill</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout</a></li>
+                </ul>
+            </div>
         </div>
-    <?php else: ?>
-        <p>You have no bills at the moment.</p>
-    <?php endif; ?>
+    </nav>
 
-    <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
-</div>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Your Bills</h2>
 
-<!-- JavaScript Libraries -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="lib/wow/wow.min.js"></script>
-<script src="lib/easing/easing.min.js"></script>
-<script src="lib/waypoints/waypoints.min.js"></script>
-<script src="lib/counterup/counterup.min.js"></script>
-<script src="lib/owlcarousel/owl.carousel.min.js"></script>
-<script src="lib/lightbox/js/lightbox.min.js"></script>
+        <?php if ($result && $result->num_rows > 0): ?>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Bill ID</th>
+                            <th>Date</th>
+                            <th>Total Amount (BDT)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                <td><?php echo htmlspecialchars($row['bill_date']); ?></td>
+                                <td><?php echo htmlspecialchars($row['total_amount']); ?></td>
+                                <td><?php echo htmlspecialchars($row['status']); ?></td>
+                                <td>
+                                    <a href="view_bill.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary btn-sm">View</a>
+                                    <?php if ($row['status'] === 'Unpaid'): ?>
+                                        <a href="pay_bill.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-success btn-sm">Pay</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-warning text-center">
+                <strong>No bills available yet.</strong>
+            </div>
+        <?php endif; ?>
 
-<!-- Template Javascript -->
-<script src="js/main.js"></script>
+        <a href="index.php" class="btn btn-secondary mt-3">Back to Dashboard</a>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Agri E-Marketplace. All Rights Reserved.</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

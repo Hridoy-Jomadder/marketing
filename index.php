@@ -1,130 +1,150 @@
 <?php
-session_start();
+// Include database connection file
 include 'db.php';
 
-// Redirect to login if the user is not signed in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-// Ensure the database connection exists
+// Check database connection
 if (!$conn) {
-    die("Database connection failed: " . mysqli_connect_error());
+    die("Connection failed: " . mysqli_connect_error());
 }
 
-// Pagination setup
-$limit = 10; // Number of products per page
-$page = isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+// Query to fetch products
+$query = "SELECT * FROM products";
+$result = mysqli_query($conn, $query);
+
+// Check for errors in the query
+if (!$result) {
+    die("Query failed: " . mysqli_error($conn));
+}
+
+// Pagination logic (if needed)
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$limit = 10; // Number of records per page
 $offset = ($page - 1) * $limit;
 
-// Fetch paginated products
-$stmt = $conn->prepare("SELECT * FROM products ORDER BY id DESC LIMIT ? OFFSET ?");
-$stmt->bind_param("ii", $limit, $offset);
-$stmt->execute();
-$result = $stmt->get_result();
+// Get total number of products
+$totalQuery = "SELECT COUNT(*) as total FROM products";
+$totalResult = mysqli_query($conn, $totalQuery);
+$totalRow = mysqli_fetch_assoc($totalResult);
+$totalProducts = $totalRow['total'];
 
-// Fetch total product count
-$totalSql = "SELECT COUNT(*) AS total FROM products";
-$totalResult = $conn->query($totalSql);
-$totalRow = $totalResult->fetch_assoc();
-$totalPages = ceil($totalRow['total'] / $limit);
+// Total pages
+$totalPages = ceil($totalProducts / $limit);
+
+// Fetch paginated results
+$query .= " LIMIT $limit OFFSET $offset";
+$result = mysqli_query($conn, $query);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agri E-Marketplace</title>
-    <meta content="" name="keywords">
-    <meta content="" name="description">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Header Style */
+        header {
+            background: linear-gradient(90deg, #007bff, #6c63ff);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
 
-    <!-- Google Web Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Rubik:wght@400;500&display=swap" rel="stylesheet"> 
+        .navbar {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
 
-    <!-- Icon Font Stylesheet -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+        .nav-link.active {
+            font-weight: bold;
+            color: #f0ad4e !important;
+        }
 
-    <!-- Libraries Stylesheet -->
-    <link href="lib/animate/animate.min.css" rel="stylesheet">
-    <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
-    <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
+        .table {
+            margin-top: 20px;
+            font-size: 1rem;
+        }
 
-    <!-- Customized Bootstrap Stylesheet -->
-    <link href="css/bootstrap.min.css" rel="stylesheet">
+        .pagination {
+            justify-content: center;
+            margin-top: 20px;
+        }
 
-    <!-- Template Stylesheet -->
-    <link href="css/style.css" rel="stylesheet">
+        footer {
+            margin-top: 50px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <div class="header">
+    <header>
         <h1>Welcome to the Agri E-Marketplace</h1>
-    </div>
+        <p>Find and manage agricultural products with ease.</p>
+    </header>
 
-    <div class="navbar">
-        <a href="index.php">Home</a>
-        <a href="profile.php">Profile</a>    
-        <?php if (!empty($_SESSION['role']) && ($_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Seller')): ?>
-            <a href="add_product.php">Add New Product</a>
-        <?php endif; ?>
-        <a href="view_orders.php">View Products</a>
-        <a href="new_order.php">New Order</a>
-        <a href="bill.php">Bill</a>
-        <a href="about.php">About</a>
-        <a href="contact.php">Contact</a>
-        <a href="logout.php" onclick="return confirm('Are you sure you want to log out?');">Logout</a>
-    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.php">Agri E-Marketplace</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="index.php">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="add_product.php">Add Product</a></li>
+                    <li class="nav-item"><a class="nav-link" href="view_orders.php">Orders</a></li>
+                    <li class="nav-item"><a class="nav-link" href="bill.php">Bill</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
+                    <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <div class="content">
-        <h2>Available Products</h2>
+    <div class="container mt-4">
+        <h2 class="text-center mb-4">Available Products</h2>
 
         <?php if ($result && $result->num_rows > 0): ?>
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
-                        <th>Name</th>
+                        <th>SL</th>
+                        <th>Product Name</th>
                         <th>Description</th>
                         <th>Image</th>
                         <th>Weight (kg)</th>
-                        <th>Price (BDT)</th>
+                        <th>Unit/Price (BDT)</th>
+                        <th>Total Amount (BDT)</th>
                         <th>Actions</th>
                     </tr>
+                </thead>
+                <tbody>
                     <?php while ($row = $result->fetch_assoc()): ?>
                         <tr>
                             <td><?php echo htmlspecialchars($row['id']); ?></td>
                             <td><?php echo htmlspecialchars($row['name']); ?></td>
                             <td><?php echo htmlspecialchars($row['description']); ?></td>
                             <td>
-                                <?php
-                                    $imagePath = "uploads/" . htmlspecialchars($row['image']);
-                                    if (!file_exists($imagePath)) {
-                                        $imagePath = "img/default-image.jpg"; // Placeholder image
-                                    }
-                                ?>
-                                <img src="<?php echo $imagePath; ?>" alt="Product Image" width="50">
+                                <img src="<?php echo "uploads/" . htmlspecialchars($row['image']); ?>" alt="Product Image" width="60">
                             </td>
                             <td><?php echo htmlspecialchars($row['weight']); ?></td>
                             <td><?php echo htmlspecialchars($row['price']); ?></td>
+                            <td><?php echo number_format($row['weight'] * $row['price'], 0); ?></td>
                             <td>
-                                <div class="action-links">
-                                    <?php if (!empty($_SESSION['role']) && ($_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Seller')): ?>
-                                        <a href="edit_product.php?id=<?php echo htmlspecialchars($row['id']); ?>">Edit</a>
-                                        <a href="delete_product.php?id=<?php echo htmlspecialchars($row['id']); ?>" onclick="return confirm('Are you sure you want to delete this product?');">Delete</a>
-                                    <?php endif; ?>
-                                </div>
+                                <a href="edit_product.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="delete_product.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">Delete</a>
                             </td>
                         </tr>
                     <?php endwhile; ?>
-                </table>
-            </div>
+                </tbody>
+            </table>
 
-            <!-- Pagination Links -->
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
+            <nav>
+                <ul class="pagination">
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                         <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
                             <a class="page-link" href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
@@ -133,26 +153,15 @@ $totalPages = ceil($totalRow['total'] / $limit);
                 </ul>
             </nav>
         <?php else: ?>
-            <p class="no-products">No products available.</p>
+            <div class="alert alert-warning text-center">
+                <strong>No products available yet.</strong>
+            </div>
         <?php endif; ?>
-
-        <?php $conn->close(); ?>
     </div>
 
-    <!-- Back to Top -->
-    <a href="#" class="btn btn-primary btn-lg-square back-to-top"><i class="fa fa-arrow-up"></i></a>
-
-    <!-- JavaScript Libraries -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="lib/wow/wow.min.js"></script>
-    <script src="lib/easing/easing.min.js"></script>
-    <script src="lib/waypoints/waypoints.min.js"></script>
-    <script src="lib/counterup/counterup.min.js"></script>
-    <script src="lib/owlcarousel/owl.carousel.min.js"></script>
-    <script src="lib/lightbox/js/lightbox.min.js"></script>
-
-    <!-- Template Javascript -->
-    <script src="js/main.js"></script>
+    <footer>
+        <p>&copy; 2025 Agri E-Marketplace. All Rights Reserved.</p>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

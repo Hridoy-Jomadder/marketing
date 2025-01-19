@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE php>
+<php lang="en">
 
     <head>
         <meta charset="utf-8">
@@ -44,7 +44,7 @@
         <!-- Navbar & Hero Start -->
         <div class="container-fluid p-0">
             <nav class="navbar navbar-expand-lg navbar-light bg-transparent px-4 px-lg-5 py-3 py-lg-0">
-                <a href="index.html" class="navbar-brand p-0">
+                <a href="index.php" class="navbar-brand p-0">
                     <h1 class="display-6 text-primary m-0"><i class="fas fa-envelope me-3"></i>Mailler</h1>
                     <!-- <img src="img/logo.png" alt="Logo"> -->
                 </a>
@@ -53,20 +53,20 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarCollapse">
                     <div class="navbar-nav ms-auto py-0">
-                        <a href="index.html" class="nav-item nav-link">Home</a>
-                        <a href="about.html" class="nav-item nav-link">About</a>
-                        <a href="service.html" class="nav-item nav-link">Services</a>
+                        <a href="index.php" class="nav-item nav-link">Home</a>
+                        <a href="about.php" class="nav-item nav-link">About</a>
+                        <a href="service.php" class="nav-item nav-link">Services</a>
                         <div class="nav-item dropdown">
                             <a href="#" class="nav-link dropdown-toggle active" data-bs-toggle="dropdown">Pages</a>
                             <div class="dropdown-menu m-0">
-                                <a href="feature.html" class="dropdown-item">Features</a>
-                                <a href="pricing.html" class="dropdown-item">Pricing</a>
-                                <a href="blog.html" class="dropdown-item">Blog</a>
-                                <a href="testimonial.html" class="dropdown-item">Testimonial</a>
-                                <a href="404.html" class="dropdown-item active">404 Page</a>
+                                <a href="feature.php" class="dropdown-item">Features</a>
+                                <a href="pricing.php" class="dropdown-item">Pricing</a>
+                                <a href="blog.php" class="dropdown-item">Blog</a>
+                                <a href="testimonial.php" class="dropdown-item">Testimonial</a>
+                                <a href="404.php" class="dropdown-item active">404 Page</a>
                             </div>
                         </div>
-                        <a href="contact.html" class="nav-item nav-link">Contact Us</a>
+                        <a href="contact.php" class="nav-item nav-link">Contact Us</a>
                     </div>
                     <a href="#" class="btn btn-light border border-primary rounded-pill text-primary py-2 px-4 me-4">Log In</a>
                     <a href="#" class="btn btn-primary rounded-pill text-white py-2 px-4">Sign Up</a>
@@ -91,33 +91,32 @@
                 <li></li>
             </ul>
             <div class="container text-center py-5" style="max-width: 900px;">
-                <h3 class="display-3 mb-4 wow fadeInDown" data-wow-delay="0.1s">404 Pages</h1>
-                <ol class="breadcrumb justify-content-center mb-0 wow fadeInDown" data-wow-delay="0.3s">
-                    <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                    <li class="breadcrumb-item"><a href="#">Pages</a></li>
-                    <li class="breadcrumb-item active text-primary">404 Page</li>
+            <h2>Signup</h2>
+    <form method="POST">
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <label>Password:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <label>Role:</label><br>
+        <select name="role" required>
+            <option value="Admin">Admin</option>
+            <option value="Seller">Seller</option>
+            <option value="Customer">Customer</option>
+        </select><br><br>
+
+        <input type="hidden" name="action" value="signup">
+        <button type="submit">Sign Up</button>
+    </form>
+    <br>
+    <a href="login.php">Already have an account? Login here</a>
                 </ol>    
             </div>
+            <br>
+            <br>
         </div>
         <!-- Header End -->
-
-
-        <!-- 404 Start -->
-        <div class="container-fluid py-5">
-            <div class="container py-5 text-center">
-                <div class="row justify-content-center">
-                    <div class="col-lg-6 wow fadeInUp" data-wow-delay="0.3s">
-                        <i class="bi bi-exclamation-triangle display-1 text-secondary"></i>
-                        <h1 class="display-1">404</h1>
-                        <h1 class="mb-4">Page Not Found</h1>
-                        <p class="mb-4">We’re sorry, the page you have looked for does not exist in our website! Maybe go to our home page or try to use a search?</p>
-                        <a class="btn btn-primary rounded-pill py-3 px-5" href="index.html">Go Back To Home</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- 404 End -->
-
 
         <!-- Footer Start -->
         <div class="container-fluid footer py-5 wow fadeIn" data-wow-delay="0.2s">
@@ -186,10 +185,8 @@
                         <span class="text-white"><a href="#"><i class="fas fa-copyright text-light me-2"></i>Your Site Name</a>, All right reserved.</span>
                     </div>
                     <div class="col-md-6 text-center text-md-end text-white">
-                        <!--/*** This template is free as long as you keep the below author’s credit link/attribution link/backlink. ***/-->
-                        <!--/*** If you'd like to use the template without the below author’s credit link/attribution link/backlink, ***/-->
-                        <!--/*** you can purchase the Credit Removal License from "https://htmlcodex.com/credit-removal". ***/-->
-                        Designed By <a class="border-bottom" href="https://htmlcodex.com">HTML Codex</a>
+                        <a href="" class="text-white">Terms & Conditions</a>
+                        <a href="" class="text-white">Privacy Policy</a>    
                     </div>
                 </div>
             </div>
@@ -216,4 +213,4 @@
     <script src="js/main.js"></script>
     </body>
 
-</html>
+</php>

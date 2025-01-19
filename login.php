@@ -3,8 +3,16 @@ session_start();
 include 'db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] == 'login') {
+    // Sanitize and validate inputs
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
+
+    // Basic email validation
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['error_message'] = "Invalid email format.";
+        header("Location: login.php");
+        exit();
+    }
 
     // Check if the user exists
     $sql = "SELECT * FROM users WHERE email = ?";
@@ -28,9 +36,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
             if ($user['role'] === 'Admin') {
                 header("Location: admin_dashboard.php");
             } elseif ($user['role'] === 'Seller') {
-                header("Location: seller_dashboard.php");
+                header("Location: index.php");
             } else {
-                header("Location: customer_dashboard.php");
+                header("Location: index.php");
             }
             exit();
         } else {
@@ -59,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['a
     <!-- Display error messages if any -->
     <?php
     if (isset($_SESSION['error_message'])) {
-        echo "<p style='color: red;'>" . $_SESSION['error_message'] . "</p>";
+        echo "<p style='color: red;'>" . htmlspecialchars($_SESSION['error_message']) . "</p>";
         unset($_SESSION['error_message']);
     }
     ?>

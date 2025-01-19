@@ -20,24 +20,33 @@ if ($result->num_rows > 0) {
 }
 
 // Handle form submission for updating product details
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = trim($_POST['name']);
     $description = trim($_POST['description']);
-    $image = trim($_POST['image']);
-    $weight = (float) $_POST['weight'];
-    $price = (float) $_POST['price'];
+    $price = trim($_POST['price']);
+    $weight = trim($_POST['weight']);
+    $total_amount = $weight * $price;
 
-    // Update product details securely
-    $update_sql = "UPDATE products SET name = ?, description = ?, image = ?, weight = ?, price = ? WHERE id = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("sssddi", $name, $description, $image, $weight, $price, $product_id);
+    // Handle image upload
+    $uploaded_image = $row['image']; // Default to current image
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $target_dir = "uploads/";
+        $target_file = $target_dir . basename($_FILES['image']['name']);
+        move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
+        $uploaded_image = basename($_FILES['image']['name']);
+    }
 
-    if ($update_stmt->execute()) {
-        echo "Product updated successfully.";
-        header("Location: index.php");
+    // Update product in the database
+    $sql = "UPDATE products SET name = ?, description = ?, price = ?, weight = ?, total_amount = ?, image = ? WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssddisi", $name, $description, $price, $weight, $total_amount, $uploaded_image, $product_id);
+
+    if ($stmt->execute()) {
+        $success_message = "Product updated successfully!";
+        header("Location: index.php?success=1");
         exit();
     } else {
-        echo "Error updating product: " . $conn->error;
+        $error_message = "Error: " . $stmt->error;
     }
 }
 
@@ -50,28 +59,48 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Product</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h2>Edit Product</h2>
-    <form method="POST">
-        <label for="name">Product Name:</label><br>
-        <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($row['name']); ?>" required><br><br>
-        
-        <label for="description">Description:</label><br>
-        <textarea id="description" name="description" required><?php echo htmlspecialchars($row['description']); ?></textarea><br><br>
-        
-        <label for="image">Image ID or Filename:</label><br>
-        <input type="text" id="image" name="image" value="<?php echo htmlspecialchars($row['image']); ?>" required><br><br>
-        
-        <label for="weight">Weight (kg):</label><br>
-        <input type="number" id="weight" name="weight" step="0.01" value="<?php echo $row['weight']; ?>" required><br><br>
-        
-        <label for="price">Price (BDT):</label><br>
-        <input type="number" id="price" name="price" step="0.01" value="<?php echo $row['price']; ?>" required><br><br>
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Edit Product</h2>
 
-        <button type="submit">Update Product</button>
+    <!-- Display success or error messages -->
+    <?php if (isset($success_message)): ?>
+        <div class="alert alert-success"><?php echo $success_message; ?></div>
+    <?php endif; ?>
+    <?php if (isset($error_message)): ?>
+        <div class="alert alert-danger"><?php echo $error_message; ?></div>
+    <?php endif; ?>
+
+    <form method="POST" enctype="multipart/form-data" class="shadow p-4 rounded bg-light">
+        <div class="mb-3">
+            <label for="name" class="form-label">Product Name:</label>
+            <input type="text" id="name" name="name" class="form-control" value="<?php echo htmlspecialchars($row['name']); ?>" required>
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description:</label>
+            <textarea id="description" name="description" class="form-control" rows="4" required><?php echo htmlspecialchars($row['description']); ?></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="image" class="form-label">Product Image:</label>
+            <input type="file" id="image" name="image" class="form-control">
+            <?php if (!empty($row['image'])): ?>
+                <img src="uploads/<?php echo htmlspecialchars($row['image']); ?>" alt="Product Image" class="mt-2" style="max-height: 100px;">
+            <?php endif; ?>
+        </div>
+        <div class="mb-3">
+            <label for="weight" class="form-label">Weight (kg):</label>
+            <input type="number" id="weight" name="weight" step="0.01" class="form-control" value="<?php echo $row['weight']; ?>" required>
+        </div>
+        <div class="mb-3">
+            <label for="price" class="form-label">Price (BDT):</label>
+            <input type="number" id="price" name="price" step="0.01" class="form-control" value="<?php echo $row['price']; ?>" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Product</button>
+        <a href="index.php" class="btn btn-secondary">Back to Product List</a>
     </form>
-
-    <p><a href="index.php">Back to Product List</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

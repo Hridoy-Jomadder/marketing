@@ -24,44 +24,51 @@ if ($result->num_rows === 1) {
     exit();
 }
 
-// Handle profile update
+// Update profile data if form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
     $full_name = trim($_POST['full_name']);
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
-    $role = trim($_POST['role']); // Admin can change the role, but keep it read-only for others
+    $profile_image = $_FILES['profile_image']['name'];
+    $target_file = $user['profile_image']; // Default to existing image
 
-    // Prevent non-admin users from changing roles
-    if ($_SESSION['role'] !== 'Admin') {
-        $role = $user['role'];  // Prevent changing the role
+    // Handle file upload for profile image
+    if ($profile_image) {
+        $upload_dir = "uploads/$user_id/";
+
+        // Create directory if it doesn't exist
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0777, true);
+        }
+
+        // Define the target file path
+        $file_extension = pathinfo($profile_image, PATHINFO_EXTENSION);
+        $target_file = $upload_dir . "profile_image." . $file_extension;
+
+        // Move the uploaded file
+        if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file)) {
+            // Success
+        } else {
+            $_SESSION['error'] = "Failed to upload profile image.";
+            header("Location: edit_profile.php");
+            exit();
+        }
     }
 
-    $update_sql = "UPDATE users SET email = ?, password = ?, full_name = ?, phone = ?, address = ?, role = ? WHERE id = ?";
-    
-    // Hash the password if it's provided
-    if (!empty($password)) {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    } else {
-        // Keep the old password if no new one is provided
-        $hashed_password = $user['password'];
-    }
+    // Update the user data in the database
+    $update_sql = "UPDATE users SET full_name = ?, phone = ?, address = ?, profile_image = ? WHERE id = ?";
+    $stmt = $conn->prepare($update_sql);
+    $stmt->bind_param("ssssi", $full_name, $phone, $address, $target_file, $user_id);
+    $stmt->execute();
 
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("ssssssi", $email, $hashed_password, $full_name, $phone, $address, $role, $user_id);
-
-    if ($update_stmt->execute()) {
-        $_SESSION['role'] = $role;  // Update the role in the session if it's changed
-        echo "Profile updated successfully!";
-        // Redirect to the dashboard after updating
-        header("Location: seller_dashboard.php");
-        exit();
-    } else {
-        echo "Error updating profile: " . $update_stmt->error;
-    }
+    $_SESSION['success'] = "Profile updated successfully.";
+    header("Location: profile.php");
+    exit();
 }
+
+$conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -69,39 +76,78 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>Edit Profile</h1>
-    
-    <form method="POST">
-        <label>Email:</label><br>
-        <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required><br><br>
+    <div class="container mt-5">
+        <h1 class="text-center">Edit Profile</h1>
 
-        <label>Password:</label><br>
-        <input type="password" name="password"><br><br>
+        <!-- Success and Error Messages -->
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="alert alert-success">
+                <?php 
+                echo $_SESSION['success']; 
+                unset($_SESSION['success']);
+                ?>
+            </div>
+        <?php endif; ?>
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="alert alert-danger">
+                <?php 
+                echo $_SESSION['error']; 
+                unset($_SESSION['error']);
+                ?>
+            </div>
+        <?php endif; ?>
 
-        <label>Full Name:</label><br>
-        <input type="text" name="full_name" value="<?php echo htmlspecialchars($user['full_name']); ?>" required><br><br>
+        <form method="POST" enctype="multipart/form-data" class="mt-4">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+            </div>
 
-        <label>Phone:</label><br>
-        <input type="text" name="phone" value="<?php echo htmlspecialchars($user['phone']); ?>"><br><br>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Leave blank to keep current password">
+            </div>
 
-        <label>Address:</label><br>
-        <textarea name="address"><?php echo htmlspecialchars($user['address']); ?></textarea><br><br>
+            <div class="mb-3">
+                <label for="full_name" class="form-label">Full Name:</label>
+                <input type="text" id="full_name" name="full_name" class="form-control" value="<?php echo htmlspecialchars($user['full_name']); ?>" required>
+            </div>
 
-        <label>Role:</label><br>
-        <input type="text" name="role" value="<?php echo htmlspecialchars($user['role']); ?>" readonly><br><br>
+            <div class="mb-3">
+                <label for="phone" class="form-label">Phone:</label>
+                <input type="text" id="phone" name="phone" class="form-control" value="<?php echo htmlspecialchars($user['phone']); ?>">
+            </div>
 
-        <button type="submit">Update Profile</button>
-    </form>
-    
-    <br>
-    <a href="seller_dashboard.php">Back to Dashboard</a>
-    <br>
-    <a href="logout.php">Logout</a>
+            <div class="mb-3">
+                <label for="address" class="form-label">Address:</label>
+                <textarea id="address" name="address" class="form-control"><?php echo htmlspecialchars($user['address']); ?></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="division" class="form-label">Division:</label>
+                <input type="text" id="division" name="division" class="form-control" value="<?php echo htmlspecialchars($user['division']); ?>">
+            </div>
+
+            <div class="mb-3">
+                <label for="profile_image" class="form-label">Profile Image:</label>
+                <input type="file" id="profile_image" name="profile_image" class="form-control">
+                <?php if (!empty($user['profile_image'])): ?>
+                    <img src="<?php echo htmlspecialchars($user['profile_image']); ?>" alt="Profile Image" class="mt-2" style="max-height: 100px;">
+                <?php endif; ?>
+            </div>
+
+
+            <!-- <div class="mb-3">
+                <label for="role" class="form-label">Role:</label>
+                <input type="text" id="role" name="role" class="form-control" value="<?php echo htmlspecialchars($user['role']); ?>" readonly>
+            </div> -->
+
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+            <a href="index.php" class="btn btn-secondary">Back to Dashboard</a>
+        </form>
+    </div>
 </body>
 </html>
-
-<?php
-$conn->close();
-?>
