@@ -140,7 +140,7 @@ $totalPages = ($totalProducts > 0) ? ceil($totalProducts / $limit) : 1;
                             <td><?php echo htmlspecialchars($row['name']); ?></td>
                             <td><?php echo htmlspecialchars($row['description']); ?></td>
                             <td>
-                                <img src="<?php echo "uploads/" . htmlspecialchars($row['image']); ?>" alt="Product Image" width="60">
+                                <img src="<?php echo "uploads/" . htmlspecialchars($row['image']); ?>" alt="Product Image" width="100">
                             </td>
                             <td><?php echo htmlspecialchars($row['weight']); ?></td>
                             <td><?php echo htmlspecialchars($row['price']); ?></td>
