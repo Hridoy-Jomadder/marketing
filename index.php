@@ -41,6 +41,16 @@ $totalResult = $totalStmt->get_result();
 $totalRow = $totalResult->fetch_assoc();
 $totalProducts = $totalRow['total'];
 
+// Query to calculate total amount (BDT) for all products
+$totalAmountQuery = "SELECT SUM(weight * price) AS total_amount FROM products WHERE user_id = ?";
+$totalAmountStmt = $conn->prepare($totalAmountQuery);
+$totalAmountStmt->bind_param("i", $user_id);
+$totalAmountStmt->execute();
+$totalAmountResult = $totalAmountStmt->get_result();
+$totalAmountRow = $totalAmountResult->fetch_assoc();
+$totalAmount = $totalAmountRow['total_amount'] ?? 0; // If no products, default to 0
+
+
 // Avoid division by zero
 $totalPages = ($totalProducts > 0) ? ceil($totalProducts / $limit) : 1;
 
@@ -153,8 +163,14 @@ $totalPages = ($totalProducts > 0) ? ceil($totalProducts / $limit) : 1;
                     <?php endwhile; ?>
                 </tbody>
             </table>
-            <?php echo "Total Products: " . $totalProducts;  // Debug output
+            <?php 
+               echo "Total Products: " . $totalProducts;  // Debug output
             ?>
+
+            <div class="text-center mt-4">
+                <h4>Total Amount (BDT): <strong><?php echo number_format($totalAmount, 0); ?>/-</strong></h4>
+            </div>
+
             <nav>
                 <ul class="pagination">
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>

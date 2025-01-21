@@ -75,7 +75,8 @@
                     <br>
                     <br>
                     <h1 class="display-4 text-dark mb-4">Empower Your Agriculture Business</h1>
-                    <p class="fs-4 mb-4">Optimize your farming operations and increase productivity with cutting-edge tools and data insights.</p>
+                    <p class="fs-4 mb-4">Power your agribusiness
+                    Increase sales and productivity of your agricultural products with cutting-edge agribusiness and data insights. follow my text</p>
                     <a href="products.php" class="btn btn-primary rounded-pill py-3 px-5">Get Started</a>
                 </div>
                 <div class="col-lg-6 wow fadeInRight" data-wow-delay="0.2s">
