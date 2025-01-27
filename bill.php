@@ -1,21 +1,58 @@
 <?php
+// Start session to track logged-in user
 session_start();
-include 'db.php';
 
-// Redirect to login if the user is not signed in
+// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    // Redirect to login page if user is not logged in
+    header('Location: login.php');
     exit();
 }
 
+// Get the user_id from the session
 $user_id = $_SESSION['user_id'];
 
-// Fetch bills associated with the user
-$sql = "SELECT * FROM bills WHERE user_id = ? ORDER BY bill_date DESC";
+// Get the bill_id from the URL (e.g., bill.php?bill_id=123)
+if (!isset($_GET['bill_id'])) {
+    echo "No bill ID provided.";
+    exit();
+}
+$bill_id = $_GET['bill_id'];
+
+// Include database connection file
+include 'db.php';
+
+// Check database connection
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Fetch the bill details
+$sql = "SELECT b.id AS bill_id, b.total_amount, b.bill_date, b.status
+        FROM bills b
+        WHERE b.id = ? AND b.user_id = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
+$stmt->bind_param("ii", $bill_id, $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    echo "Bill not found or you're not authorized to view this bill.";
+    exit();
+}
+
+$bill = $result->fetch_assoc();
+
+// Fetch ordered products under this bill
+$sql_products = "SELECT p.name AS product_name, o.quantity, o.total_price
+                 FROM orders o
+                 JOIN products p ON p.id = o.product_id
+                 WHERE o.bill_id = ? AND o.user_id = ?";
+$stmt_products = $conn->prepare($sql_products);
+$stmt_products->bind_param("ii", $bill_id, $user_id);
+$stmt_products->execute();
+$result_products = $stmt_products->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -23,116 +60,56 @@ $result = $stmt->get_result();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bill Management</title>
+    <title>Bill Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Header Style */
-        header {
-            background: linear-gradient(90deg, #007bff, #6c63ff);
-            color: white;
-            padding: 2rem 0;
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-
-        .navbar {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .nav-link.active {
-            font-weight: bold;
-            color: #f0ad4e !important;
-        }
-
-        .table {
-            margin-top: 20px;
-            font-size: 1rem;
-        }
-
-        .pagination {
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        footer {
-            margin-top: 50px;
-            background-color: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-        }
+        .container { max-width: 800px; margin-top: 20px; }
+        .print-btn { margin-top: 20px; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Your Bills</h1>
-        <p>View and manage your payment details with ease.</p>
+
+<div class="container">
+    <header class="text-center bg-dark text-white p-3">
+        <h2>Bill Details (ID: <?php echo htmlspecialchars($bill['bill_id']); ?>)</h2>
     </header>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">Agri E-Marketplace</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
-                    <li class="nav-item"><a class="nav-link" href="add_product.php">Add Product</a></li>
-                    <li class="nav-item"><a class="nav-link" href="orders.php">Orders</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="bill.php">Bill</a></li>
-                    <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
-                    <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <table class="table table-bordered mt-4">
+        <tr><th>Total Amount (BDT)</th><td><?php echo htmlspecialchars($bill['total_amount']); ?></td></tr>
+        <tr><th>Bill Date</th><td><?php echo htmlspecialchars($bill['bill_date']); ?></td></tr>
+        <tr><th>Status</th><td><?php echo htmlspecialchars($bill['status']); ?></td></tr>
+    </table>
 
-    <div class="container mt-4">
-        <h2 class="text-center mb-4">Your Bills</h2>
+    <h3 class="mt-4">Ordered Products</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+                <th>Total Price (BDT)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = $result_products->fetch_assoc()) { ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+                    <td><?php echo htmlspecialchars($row['quantity']); ?></td>
+                    <td><?php echo htmlspecialchars($row['total_price']); ?></td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
 
-        <?php if ($result && $result->num_rows > 0): ?>
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Bill ID</th>
-                            <th>Date</th>
-                            <th>Total Amount (BDT)</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = $result->fetch_assoc()): ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['id']); ?></td>
-                                <td><?php echo htmlspecialchars($row['bill_date']); ?></td>
-                                <td><?php echo htmlspecialchars($row['total_amount']); ?></td>
-                                <td><?php echo htmlspecialchars($row['status']); ?></td>
-                                <td>
-                                    <a href="view_bill.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-primary btn-sm">View</a>
-                                    <?php if ($row['status'] === 'Unpaid'): ?>
-                                        <a href="pay_bill.php?id=<?php echo htmlspecialchars($row['id']); ?>" class="btn btn-success btn-sm">Pay</a>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php else: ?>
-            <div class="alert alert-warning text-center">
-                <strong>No bills available yet.</strong>
-            </div>
-        <?php endif; ?>
-
-        <a href="index.php" class="btn btn-secondary mt-3">Back to Dashboard</a>
+    <div class="text-center">
+        <button class="btn btn-primary print-btn" onclick="window.print()">Print Bill</button>
+        <a href="orders.php" class="btn btn-secondary">Back to Orders</a>
     </div>
+</div>
 
-    <footer>
-        <p>&copy; 2025 Agri E-Marketplace. All Rights Reserved.</p>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+<?php
+$conn->close();
+?>

@@ -2,44 +2,47 @@
 // Include database connection
 include 'db.php';
 
-// Start the session
+// Secure session handling
+session_set_cookie_params(['httponly' => true]);
 session_start();
+session_regenerate_id(true);
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    echo "Error: You must be logged in to access this page.";
+    header("Location: login.php");
     exit();
 }
 
 // Get the logged-in user ID
 $user_id = $_SESSION['user_id'];
 
-// Get the bill ID from the URL
-$bill_id = isset($_GET['bill_id']) ? intval($_GET['bill_id']) : null;
+// Pagination settings
+$limit = 10; // Number of orders per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
 
-// Validate that `bill_id` is provided
-if (!$bill_id) {
-    echo "Error: Bill ID is required. <a href='index.php'>Back to Home</a>";
-    exit();
-}
-
-// Fetch orders for the given bill ID
-$sql = "SELECT o.id AS order_id, o.product_name, o.quantity, o.total_price, o.order_status, p.name AS product_name, b.total_amount AS bill_total
+// Fetch all orders for the logged-in user with pagination
+$sql = "SELECT o.id AS order_id, o.product_name, o.quantity, 
+               o.total_price, o.order_status, o.order_date,
+               b.id AS bill_id, b.total_amount, b.bill_date
         FROM orders o
-        JOIN products p ON o.product_id = p.id
-        JOIN bills b ON b.id = o.id
-        WHERE b.id = ? AND b.user_id = ?";
+        LEFT JOIN bills b ON o.bill_id = b.id
+        WHERE o.user_id = ?
+        LIMIT ?, ?";
+
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ii", $bill_id, $user_id);
+$stmt->bind_param("iii", $user_id, $offset, $limit);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Check if there are orders for the bill
-if ($result->num_rows === 0) {
-    echo "No orders found for this bill.";
-    exit();
-}
-
+// Fetch total orders count for pagination
+$count_sql = "SELECT COUNT(*) AS total FROM orders WHERE user_id = ?";
+$count_stmt = $conn->prepare($count_sql);
+$count_stmt->bind_param("i", $user_id);
+$count_stmt->execute();
+$count_result = $count_stmt->get_result();
+$total_orders = $count_result->fetch_assoc()['total'];
+$total_pages = ceil($total_orders / $limit);
 ?>
 
 <!DOCTYPE html>
@@ -47,12 +50,27 @@ if ($result->num_rows === 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Orders</title>
+    <title>Orders - Agri E-Marketplace</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        header {
+            background: linear-gradient(90deg, #007bff, #6c63ff);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        .table { margin-top: 20px; font-size: 1rem; }
+        .pagination { justify-content: center; margin-top: 20px; }
+        footer { margin-top: 50px; background-color: #f8f9fa; padding: 20px; text-align: center; }
+        .text-warning { color: orange; }
+        .text-success { color: green; }
+        .text-danger { color: red; }
+    </style>
 </head>
 <body>
-<header>
+    <header>
         <h1>Welcome to the Agri E-Marketplace</h1>
-        <p>Your personal profile</p>
+        <p>Find and manage agricultural products with ease.</p>
     </header>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -63,7 +81,7 @@ if ($result->num_rows === 0) {
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="profile.php">Profile</a></li>
                     <li class="nav-item"><a class="nav-link" href="add_product.php">Add Product</a></li>
                     <li class="nav-item"><a class="nav-link active" href="orders.php">Orders</a></li>
@@ -75,29 +93,35 @@ if ($result->num_rows === 0) {
         </div>
     </nav>
 
-    <h2>Orders for Bill ID: <?php echo htmlspecialchars($bill_id); ?></h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Order ID</th>
-                <th>Product Name</th>
-                <th>Quantity</th>
-                <th>Total Price (BDT)</th>
-                <th>Order Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($row = $result->fetch_assoc()) { ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($row['order_id']); ?></td>
-                    <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                    <td><?php echo htmlspecialchars($row['quantity']); ?></td>
-                    <td><?php echo htmlspecialchars($row['total_price']); ?></td>
-                    <td><?php echo htmlspecialchars($row['order_status']); ?></td>
-                </tr>
-            <?php } ?>
-        </tbody>
-    </table>
-    <p><a href="index.php">Back to Home</a></p>
+<table class="table table-bordered table-striped mt-4">
+<thead class="table-dark">
+    <tr>
+        <th>Order ID</th>
+        <th>Product Name</th>
+        <th>Quantity</th>
+        <th>Total Price (BDT)</th>
+        <th>Order Status</th>
+        <th>Order Date</th>
+    </tr>
+</thead>
+<tbody>
+    <?php while ($row = $result->fetch_assoc()) { ?>
+        <tr>
+            <td><?php echo htmlspecialchars($row['order_id']); ?></td>
+            <td><?php echo htmlspecialchars($row['product_name']); ?></td>
+            <td><?php echo htmlspecialchars($row['quantity']); ?></td>
+            <td><?php echo htmlspecialchars($row['total_price']); ?></td>
+            <td class="<?php echo ($row['order_status'] == 'Pending') ? 'text-warning' : (($row['order_status'] == 'Completed') ? 'text-success' : 'text-danger'); ?>">
+                <?php echo htmlspecialchars($row['order_status']); ?>
+            </td>
+            <td><?php echo date("d M Y, h:i A", strtotime($row['order_date'])); ?></td>
+        </tr>
+    <?php } ?>
+</tbody>
+</table>
+
+<p class="text-center"><a href="index.php" class="btn btn-primary">Back to Home</a></p>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $full_name = trim($_POST['full_name']);
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
+    $division = trim($_POST['division']);
     $profile_image = $_FILES['profile_image']['name'];
     $target_file = $user['profile_image']; // Default to existing image
 
@@ -46,9 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $target_file = $upload_dir . "profile_image." . $file_extension;
 
         // Move the uploaded file
-        if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file)) {
-            // Success
-        } else {
+        if (!move_uploaded_file($_FILES['profile_image']['tmp_name'], $target_file)) {
             $_SESSION['error'] = "Failed to upload profile image.";
             header("Location: edit_profile.php");
             exit();
@@ -56,9 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // Update the user data in the database
-    $update_sql = "UPDATE users SET full_name = ?, phone = ?, address = ?, profile_image = ? WHERE id = ?";
+    $update_sql = "UPDATE users SET full_name = ?, phone = ?, address = ?, division = ?, profile_image = ? WHERE id = ?";
     $stmt = $conn->prepare($update_sql);
-    $stmt->bind_param("ssssi", $full_name, $phone, $address, $target_file, $user_id);
+    $stmt->bind_param("sssssi", $full_name, $phone, $address, $division, $target_file, $user_id);
     $stmt->execute();
 
     $_SESSION['success'] = "Profile updated successfully.";
@@ -69,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $conn->close();
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,6 +75,80 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-shadow: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .alert {
+            margin-top: 20px;
+        }
+
+        img {
+            max-height: 100px;
+            margin-top: 10px;
+        }
+
+        .mb-3 {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            font-weight: bold;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+    </style>
+
 </head>
 <body>
     <div class="container mt-5">
@@ -103,12 +175,7 @@ $conn->close();
         <form method="POST" enctype="multipart/form-data" class="mt-4">
             <div class="mb-3">
                 <label for="email" class="form-label">Email:</label>
-                <input type="email" id="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="password" class="form-label">Password:</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Leave blank to keep current password">
+                <input type="email" id="email" name="email" class="form-control" value="<?php echo htmlspecialchars($user['email']); ?>" readonly>
             </div>
 
             <div class="mb-3">
@@ -135,15 +202,9 @@ $conn->close();
                 <label for="profile_image" class="form-label">Profile Image:</label>
                 <input type="file" id="profile_image" name="profile_image" class="form-control">
                 <?php if (!empty($user['profile_image'])): ?>
-                    <img src="<?php echo htmlspecialchars($user['profile_image']); ?>" alt="Profile Image" class="mt-2" style="max-height: 100px;">
+                    <img src="<?php echo htmlspecialchars($user['profile_image']); ?>" alt="Profile Image" class="mt-2">
                 <?php endif; ?>
             </div>
-
-
-            <!-- <div class="mb-3">
-                <label for="role" class="form-label">Role:</label>
-                <input type="text" id="role" name="role" class="form-control" value="<?php echo htmlspecialchars($user['role']); ?>" readonly>
-            </div> -->
 
             <button type="submit" class="btn btn-primary">Update Profile</button>
             <a href="index.php" class="btn btn-secondary">Back to Dashboard</a>

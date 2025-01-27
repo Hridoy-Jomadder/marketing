@@ -32,15 +32,6 @@
 
     <body>
 
-        <!-- Spinner Start -->
-        <!-- <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
-            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-        </div> -->
-        <!-- Spinner End -->
-
-
         <!-- Navbar & Hero Start -->
         <div class="container-fluid p-0">
             <nav class="navbar navbar-expand-lg navbar-light bg-transparent px-4 px-lg-5 py-3 py-lg-0">
@@ -53,13 +44,11 @@
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <div class="navbar-nav ms-auto py-0">
                     <a href="index.php" class="nav-item nav-link active">Dashboard</a>
-                    <a href="about.php" class="nav-item nav-link">About Us</a>
-                    <a href="services.php" class="nav-item nav-link">Services</a>
+                    <a href="about.php" class="nav-item nav-link">About</a>
+                    <a href="service.php" class="nav-item nav-link">Services</a>
                     <a href="products.php" class="nav-item nav-link">Products</a>
                     <a href="contact.php" class="nav-item nav-link">Contact</a>
                 </div>
-                <a href="login.php" class="btn btn-light border border-primary rounded-pill text-primary py-2 px-4 me-4">Log In</a>
-                <a href="signup.php" class="btn btn-primary rounded-pill text-white py-2 px-4">Sign Up</a>
             </div>
         </nav>
         </div>
@@ -83,7 +72,6 @@
                 <h3 class="display-3 mb-4 wow fadeInDown" data-wow-delay="0.1s">Learn About Us</h1>
                 <ol class="breadcrumb justify-content-center mb-0 wow fadeInDown" data-wow-delay="0.3s">
                     <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                    <li class="breadcrumb-item"><a href="#">Pages</a></li>
                     <li class="breadcrumb-item active text-primary">About</li>
                 </ol>    
             </div>

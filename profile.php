@@ -25,6 +25,16 @@ if ($result->num_rows === 1) {
 }
 
 $conn->close();
+
+if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 1800)) {
+    // Last request was more than 30 minutes ago
+    session_unset();
+    session_destroy();
+    header("Location: login.php");
+    exit();
+}
+$_SESSION['LAST_ACTIVITY'] = time();
+
 ?>
 
 <!DOCTYPE html>
@@ -108,7 +118,9 @@ $conn->close();
                     <li class="nav-item"><a class="nav-link" href="orders.php">Orders</a></li>
                     <li class="nav-item"><a class="nav-link" href="bill.php">Bill</a></li>
                     <li class="nav-item"><a class="nav-link" href="about.php">About</a></li>
-                    <li class="nav-item"><a class="nav-link text-danger" href="logout.php">Logout</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link text-danger" href="logout.php" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
+                    </li>
                 </ul>
             </div>
         </div>

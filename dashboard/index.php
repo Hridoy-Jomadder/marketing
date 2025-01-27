@@ -1,3 +1,39 @@
+<?php
+// Start session to track logged-in user
+session_start();
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    // Redirect to login page if user is not logged in
+    header('Location: login.php');
+    exit();
+}
+
+// Get the user_id from the session
+$user_id = $_SESSION['user_id'];
+
+// Include database connection file
+include 'db.php';
+
+// Check database connection
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+// Pagination variables
+$limit = 10; // Number of records per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+// Query to fetch products for the logged-in user with pagination
+$query = "SELECT * FROM products WHERE user_id = ? LIMIT ? OFFSET ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("iii", $user_id, $limit, $offset); // Bind the user_id, limit, and offset
+$stmt->execute();
+$result = $stmt->get_result();
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -56,8 +92,8 @@
                     <a href="products.php" class="nav-item nav-link">Products</a>
                     <a href="contact.php" class="nav-item nav-link">Contact</a>
                 </div>
-                <a href="login.php" class="btn btn-light border border-primary rounded-pill text-primary py-2 px-4 me-4">Log In</a>
-                <a href="signup.php" class="btn btn-primary rounded-pill text-white py-2 px-4">Sign Up</a>
+                <!-- <a href="login.php" class="btn btn-light border border-primary rounded-pill text-primary py-2 px-4 me-4">Log In</a>
+                <a href="signup.php" class="btn btn-primary rounded-pill text-white py-2 px-4">Sign Up</a> -->
             </div>
         </nav>
 
